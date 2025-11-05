@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Backup files
+*.backup.*
+*~
+
+# Editor files
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Test files
+test/
+*.test.zsh
+
