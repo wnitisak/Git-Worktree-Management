@@ -715,8 +715,11 @@ gwc-link-interactive() {
         existing_worktrees+=("$wt_path")
     done < <(git worktree list 2>/dev/null)
     
-    # Find unlinked directories
-    for dir in "$worktrees_base"/*(/N); do
+    # Find unlinked directories (including subdirectories for branch/feature structure)
+    # Scan both direct children and nested subdirectories (e.g., hotfix/Protriva, feature/Uploros)
+    for dir in "$worktrees_base"/*(/N) "$worktrees_base"/*/*(/N); do
+        [ -d "$dir" ] || continue
+        
         local is_linked=false
         for wt in "${existing_worktrees[@]}"; do
             if [ "$wt" = "$dir" ]; then
@@ -742,8 +745,9 @@ gwc-link-interactive() {
     # Display numbered list
     local i=1
     for dir in "${unlinked_dirs[@]}"; do
-        local display_name=$(basename "$dir")
-        echo "  [$i] $display_name"
+        # Show relative path from worktrees_base for better context
+        local relative_path=${dir#$worktrees_base/}
+        echo "  [$i] $relative_path"
         echo "      Path: $dir"
         ((i++))
     done
@@ -764,10 +768,13 @@ gwc-link-interactive() {
     fi
     
     local selected_dir="${unlinked_dirs[$selection]}"
-    local dir_name=$(basename "$selected_dir")
+    local relative_path=${selected_dir#$worktrees_base/}
+    
+    # Suggest branch name as the full relative path (e.g., hotfix/Protriva)
+    local suggested_branch="$relative_path"
     
     echo ""
-    echo "Selected: $dir_name"
+    echo "Selected: $relative_path"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
     echo "Available branches:"
@@ -801,12 +808,12 @@ gwc-link-interactive() {
     
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo -n "Enter branch name to link (or suggested: $dir_name): "
+    echo -n "Enter branch name to link (or suggested: $suggested_branch): "
     read branch_name
     
-    # If empty, use directory name as suggestion
+    # If empty, use suggested branch (full relative path)
     if [ -z "$branch_name" ]; then
-        branch_name="$dir_name"
+        branch_name="$suggested_branch"
         echo "Using: $branch_name"
     fi
     
