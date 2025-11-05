@@ -738,8 +738,31 @@ gwc-link-interactive() {
             fi
         done
         
-        # Only add if not linked AND not inside a linked worktree
+        # Check if this is just an organizational folder (like hotfix/) or actual worktree
+        # Skip if it has subdirectories but no files (likely just a parent folder)
+        local has_subdirs=false
+        local has_content=false
+        
+        if [ -n "$(ls -A "$dir" 2>/dev/null)" ]; then
+            has_content=true
+            # Check if it only contains directories (organizational folder)
+            if [ -d "$dir" ] && [ -z "$(find "$dir" -maxdepth 1 -type f 2>/dev/null)" ]; then
+                # Has no files at top level, might be organizational
+                if [ -n "$(find "$dir" -maxdepth 1 -type d ! -name "$(basename "$dir")" 2>/dev/null)" ]; then
+                    has_subdirs=true
+                fi
+            fi
+        fi
+        
+        # Only add if:
+        # - Not linked AND not inside a linked worktree
+        # - AND (has files OR is empty OR has no subdirs - not just organizational folder)
         if [ "$is_linked" = false ] && [ "$is_inside_linked" = false ]; then
+            # Skip organizational folders (only subdirectories, no files)
+            if [ "$has_subdirs" = true ] && [ "$has_content" = true ]; then
+                # This looks like just an organizational folder (e.g., hotfix/, feature/)
+                continue
+            fi
             unlinked_dirs+=("$dir")
         fi
     done
