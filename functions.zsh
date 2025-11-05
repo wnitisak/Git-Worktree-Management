@@ -650,8 +650,8 @@ gwc-detect-unlinked() {
     
     # Get list of existing git worktrees
     while IFS= read -r line; do
-        local path=${line%% *}  # Get first field using ZSH parameter expansion
-        existing_worktrees+=("$path")
+        local wt_path=${line%% *}  # Get first field using ZSH parameter expansion
+        existing_worktrees+=("$wt_path")
     done < <(git worktree list 2>/dev/null)
     
     # Scan all directories in worktrees base
@@ -711,8 +711,8 @@ gwc-link-interactive() {
     
     # Get list of existing git worktrees
     while IFS= read -r line; do
-        local path=${line%% *}  # Get first field using ZSH parameter expansion
-        existing_worktrees+=("$path")
+        local wt_path=${line%% *}  # Get first field using ZSH parameter expansion
+        existing_worktrees+=("$wt_path")
     done < <(git worktree list 2>/dev/null)
     
     # Find unlinked directories
