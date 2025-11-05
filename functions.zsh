@@ -721,14 +721,25 @@ gwc-link-interactive() {
         [ -d "$dir" ] || continue
         
         local is_linked=false
+        local is_inside_linked=false
+        
+        # Check if this directory is a linked worktree
         for wt in "${existing_worktrees[@]}"; do
             if [ "$wt" = "$dir" ]; then
                 is_linked=true
                 break
             fi
+            
+            # Check if this directory is INSIDE a linked worktree (subdirectory of it)
+            # e.g., Tzmni/Layout is inside Tzmni (which is linked)
+            if [[ "$dir" == "$wt"/* ]]; then
+                is_inside_linked=true
+                break
+            fi
         done
         
-        if [ "$is_linked" = false ]; then
+        # Only add if not linked AND not inside a linked worktree
+        if [ "$is_linked" = false ] && [ "$is_inside_linked" = false ]; then
             unlinked_dirs+=("$dir")
         fi
     done
