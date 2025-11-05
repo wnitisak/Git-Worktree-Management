@@ -424,7 +424,7 @@ gwc-info() {
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     
     while IFS= read -r line; do
-        local path=$(echo "$line" | awk '{print $1}')
+        local path=${line%% *}  # Get first field using ZSH parameter expansion
         # Extract branch name using Zsh parameter expansion
         local branch="${${line##*\[}%%\]*}"
         
@@ -540,7 +540,7 @@ gwc-branches() {
     local count=0
     
     while IFS= read -r line; do
-        local path=$(echo "$line" | awk '{print $1}')
+        local path=${line%% *}  # Get first field using ZSH parameter expansion
         # Extract branch name using Zsh parameter expansion
         local branch="${${line##*\[}%%\]*}"
         
@@ -580,7 +580,7 @@ gwc-health() {
     local issues=0
     
     while IFS= read -r line; do
-        local path=$(echo "$line" | awk '{print $1}')
+        local path=${line%% *}  # Get first field using ZSH parameter expansion
         # Extract branch name using Zsh parameter expansion
         local branch="${${line##*\[}%%\]*}"
         
@@ -650,7 +650,7 @@ gwc-detect-unlinked() {
     
     # Get list of existing git worktrees
     while IFS= read -r line; do
-        local path=$(echo "$line" | awk '{print $1}')
+        local path=${line%% *}  # Get first field using ZSH parameter expansion
         existing_worktrees+=("$path")
     done < <(git worktree list 2>/dev/null)
     
@@ -711,7 +711,7 @@ gwc-link-interactive() {
     
     # Get list of existing git worktrees
     while IFS= read -r line; do
-        local path=$(echo "$line" | awk '{print $1}')
+        local path=${line%% *}  # Get first field using ZSH parameter expansion
         existing_worktrees+=("$path")
     done < <(git worktree list 2>/dev/null)
     
@@ -1004,7 +1004,7 @@ _gwc-remove() {
     # Parse git worktree list output
     # Format: /path/to/worktree [branch-name]
     while IFS= read -r line; do
-        local path=$(echo "$line" | awk '{print $1}')
+        local path=${line%% *}  # Get first field using ZSH parameter expansion
         if [ -n "$path" ] && [ "$path" != "$main_repo" ]; then
             worktree_paths+=("$path")
         fi
@@ -1031,7 +1031,7 @@ _gwc-branch-complete() {
     
     # Get branch names from worktree list
     while IFS= read -r line; do
-        local path=$(echo "$line" | awk '{print $1}')
+        local path=${line%% *}  # Get first field using ZSH parameter expansion
         # Extract branch name using Zsh parameter expansion
         local branch="${${line##*\[}%%\]*}"
         if [ "$path" != "$main_repo" ] && [ -n "$branch" ]; then
