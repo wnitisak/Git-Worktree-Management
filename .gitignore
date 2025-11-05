@@ -17,3 +17,6 @@
 test/
 *.test.zsh
 
+# Local setup guides (for personal use only)
+GITHUB_SETUP.md
+
