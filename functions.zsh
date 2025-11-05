@@ -170,12 +170,14 @@ COMMANDS:
       Two-step process with visual menus:
         1. Shows list of unlinked directories - select by number
         2. Shows available branches - enter branch name (with suggestions)
+        3. If branch doesn't exist, option to create it (like gwcc)
       
       This is the main way to fix Cursor-created worktree directories!
       
       Example:
         cd /path/to/main/repo
         gwc-link            # Start interactive process
+        # Can link to existing branch OR create new one!
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -818,8 +820,66 @@ gwc-link-interactive() {
     
     if [ "$branch_exists" = false ]; then
         echo ""
-        echo "❌ Branch '$branch_name' does not exist"
-        return 1
+        echo "⚠️  Branch '$branch_name' does not exist yet"
+        echo ""
+        echo "Would you like to:"
+        echo "  [1] Create new branch and worktree (like gwcc)"
+        echo "  [2] Cancel and choose a different branch"
+        echo ""
+        echo -n "Your choice (1 or 2): "
+        read create_choice
+        
+        if [[ "$create_choice" == "1" ]]; then
+            echo ""
+            echo "🌱 Creating new branch '$branch_name' and worktree..."
+            
+            # Backup existing content if any
+            local backup_dir=""
+            if [ -n "$(ls -A "$selected_dir" 2>/dev/null)" ]; then
+                backup_dir="${selected_dir}.backup.$(date +%Y%m%d_%H%M%S)"
+                echo "   📦 Backing up existing content to: $backup_dir"
+                mv "$selected_dir" "$backup_dir"
+            else
+                rm -rf "$selected_dir"
+            fi
+            
+            # Create new branch and worktree (like gwcc does)
+            cd "$main_repo"
+            if git worktree add -b "$branch_name" "$selected_dir"; then
+                echo ""
+                echo "✅ Successfully created new branch and worktree!"
+                echo "   Location: $selected_dir"
+                echo "   Branch: $branch_name (new branch)"
+                
+                # Restore backup
+                if [ -n "$backup_dir" ] && [ -d "$backup_dir" ]; then
+                    echo ""
+                    echo "   📋 Restoring content from backup..."
+                    cp -r "$backup_dir"/* "$selected_dir"/ 2>/dev/null
+                    echo "   ✓ Content restored"
+                    echo "   💾 Backup kept at: $backup_dir"
+                fi
+                
+                echo ""
+                echo "🎉 Done! You can now:"
+                echo "   cd $selected_dir"
+                echo "   cursor $selected_dir"
+                
+                return 0
+            else
+                echo ""
+                echo "❌ Failed to create branch and worktree"
+                
+                # Restore backup
+                if [ -n "$backup_dir" ] && [ -d "$backup_dir" ]; then
+                    mv "$backup_dir" "$selected_dir"
+                fi
+                return 1
+            fi
+        else
+            echo "Cancelled"
+            return 0
+        fi
     fi
     
     echo ""
