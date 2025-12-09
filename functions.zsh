@@ -40,29 +40,36 @@ COMMANDS:
         --open, -o      Open the worktree in default editor after creation
       
       Examples:
-        gwc feature/login                    # Create in ../feature-login
-        gwc hotfix/bug /tmp/fix              # Create at custom path
+        gwc feature/login                    # Create in .worktrees/feature/login
+        gwc hotfix/bug --path /tmp/fix       # Create at custom path
         gwc feature/api --cursor             # Create and open in Cursor
 
-  gwcc <branch> [path]
-      Shortcut for: gwc <branch> [path] --cursor
-      Creates worktree and automatically opens in Cursor.
+  gwcc <branch>
+      Shortcut for: gwc <branch> --cursor
+      Creates worktree in <main-repo>/.worktrees/<branch> and opens in Cursor.
       
       Example:
         gwcc hotfix/critical-bug
 
+  gwcw <branch>
+      Shortcut for: gwc <branch> --open warp
+      Creates worktree in <main-repo>/.worktrees/<branch> and opens in Warp.
+      
+      Example:
+        gwcw hotfix/critical-bug
+
   gwc-open <branch> [editor]
-      Open an existing worktree in your preferred editor.
+      Open an existing worktree in your preferred editor or terminal.
       
       Arguments:
         branch    Branch name of the worktree to open
-        editor    Editor to use (default: cursor)
-                  Options: cursor, code, vscode, code-insiders
+        editor    Editor/Terminal to use (default: cursor)
+                  Options: cursor, code, vscode, code-insiders, warp
       
       Examples:
         gwc-open feature/login               # Open in Cursor
         gwc-open feature/api code            # Open in VS Code
-        gwc-open hotfix/bug vscode           # Open in VS Code
+        gwc-open hotfix/bug warp             # Open in Warp terminal
 
   ─────────────────────────────────────────────────────────────────────────────
 
@@ -151,33 +158,36 @@ COMMANDS:
         ✗ /path/to/old - Directory does not exist
   
   ─────────────────────────────────────────────────────────────────────────────
-  
-  🔧 FIX CURSOR AUTO-CREATED WORKTREES
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+IMPORTANT SETUP:
+
+  📝 Add .worktrees/ to .gitignore
   ─────────────────────────────────────────────────────────────────────────────
-  gwc-detect-unlinked
-      Scan for directories in ~/.cursor/worktrees/ that aren't proper git worktrees.
-      This happens when Cursor creates a worktree directory automatically but
-      doesn't link it to a git branch.
-      
-      Example output:
-        🔍 Scanning for unlinked worktree directories...
-        ❌ Found unlinked directory: ~/.cursor/worktrees/my-repo/feature/api
-        ⚠️  Found 1 unlinked director(ies)
-        To fix these, run: gwc-link
+  Worktrees are created in <main-repo>/.worktrees/ directory.
+  Make sure to add this to your .gitignore file:
   
-  gwc-link  (alias: gwc-link-interactive)
-      ✨ INTERACTIVE: Select unlinked directory, then select branch to link.
-      Two-step process with visual menus:
-        1. Shows list of unlinked directories - select by number
-        2. Shows available branches - enter branch name (with suggestions)
-        3. If branch doesn't exist, option to create it (like gwcc)
-      
-      This is the main way to fix Cursor-created worktree directories!
-      
-      Example:
-        cd /path/to/main/repo
-        gwc-link            # Start interactive process
-        # Can link to existing branch OR create new one!
+      echo ".worktrees/" >> .gitignore
+  
+  This prevents worktree directories from being tracked in your repository.
+
+  🔗 Shared Files are Symlinked
+  ─────────────────────────────────────────────────────────────────────────────
+  The following files are automatically symlinked from the main repo:
+    • node_modules/  (if exists)
+    • .env           (if exists)
+    • .env.local     (if exists)
+  
+  Benefits:
+    ✅ Instant worktree creation (no copying needed)
+    ✅ Saves disk space (shared node_modules across all worktrees)
+    ✅ Always in sync (npm install in ANY worktree updates ALL worktrees)
+  
+  Important Notes:
+    ⚠️  Installing packages in one worktree affects ALL worktrees
+    ⚠️  Changing .env in one worktree affects ALL worktrees
+    ℹ️  This ensures consistency across worktrees (usually desired)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -185,12 +195,14 @@ TYPICAL WORKFLOWS:
 
   1. Start working on a new feature:
      $ gwcc feature/new-ui           # Create worktree and open in Cursor
+     $ gwcw feature/new-ui           # Or open in Warp terminal
      $ gwc-cd feature/new-ui         # Navigate to worktree
      # ... do your work ...
      $ gwc-rm-branch feature/new-ui  # Remove when done
 
   2. Quick bug fix on another branch:
-     $ gwc hotfix/critical --cursor  # Create and open
+     $ gwc hotfix/critical --cursor  # Create and open in Cursor
+     $ gwc hotfix/critical --open warp  # Or open in Warp
      # ... fix bug ...
      $ gwc-cd main                   # Return to main worktree
      $ gwc-rm-branch hotfix/critical # Clean up
@@ -200,13 +212,10 @@ TYPICAL WORKFLOWS:
      $ gwc-health                    # Check for any issues
      $ gwc-cleanup                   # Remove stale references
 
-  4. Open existing worktree in different editor:
+  4. Open existing worktree in different editor/terminal:
      $ gwc-open feature/api code     # Open in VS Code
      $ gwc-open feature/api cursor   # Open in Cursor
-  
-  5. Fix Cursor auto-created worktrees:
-     $ gwc-detect-unlinked           # Find unlinked directories
-     $ gwc-link                      # Interactive: select directory & branch
+     $ gwc-open feature/api warp     # Open in Warp terminal
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -219,11 +228,15 @@ TAB COMPLETION:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 TIPS:
+    • Add .worktrees/ to your .gitignore file (important!)
+    • Shared files (node_modules, .env) are symlinked for speed and consistency
     • Use gwc-info regularly to monitor worktree status
     • Run gwc-health before cleaning up to avoid data loss
     • Use gwc-cd to quickly switch between worktrees
     • Combine gwcc with your workflow for quick context switching
     • Use gwc-cleanup after manually deleting worktree directories
+    • Worktrees are created locally in <repo>/.worktrees/ for better IDE integration
+    • Installing packages in one worktree updates all worktrees (shared node_modules)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -292,17 +305,16 @@ git-worktree-create() {
         return 1
     fi
     
-    # Default worktree path
-    if [ -z "$worktree_path" ]; then
-        local repo_name=$(basename $(git rev-parse --show-toplevel 2>/dev/null || pwd))
-        worktree_path="$HOME/.cursor/worktrees/$repo_name/$branch_name"
-    fi
-    
     # Check if we're in a git repo
     local main_repo=$(git rev-parse --show-toplevel 2>/dev/null)
     if [ -z "$main_repo" ]; then
         echo "Error: Not in a git repository"
         return 1
+    fi
+    
+    # Default worktree path
+    if [ -z "$worktree_path" ]; then
+        worktree_path="$main_repo/.worktrees/$branch_name"
     fi
     
     # Check if branch exists (local or remote)
@@ -347,15 +359,22 @@ git-worktree-create() {
         echo "  Location: $worktree_path"
         echo "  Branch: $branch_name"
         
+        # Link shared files from main repository
+        _gwc_link_shared_files "$main_repo" "$worktree_path"
+        
         # Open in editor if specified
         if [ -n "$open_editor" ]; then
+            echo ""
             echo "Opening in $open_editor..."
             case $open_editor in
                 cursor)
                     cursor "$worktree_path" &
                     ;;
-                code)
+                code|vscode)
                     code "$worktree_path" &
+                    ;;
+                warp)
+                    open -a Warp "$worktree_path" &
                     ;;
                 *)
                     $open_editor "$worktree_path" &
@@ -375,7 +394,68 @@ git-worktree-create() {
 # ============================================
 # Helper Functions
 # ============================================
-# Function for gwcc (allows branch names with slashes)
+
+# Link shared files (node_modules, .env files) to worktree via symlinks
+_gwc_link_shared_files() {
+    local source_dir="$1"
+    local target_dir="$2"
+    
+    if [ ! -d "$source_dir" ] || [ ! -d "$target_dir" ]; then
+        return 1
+    fi
+    
+    echo ""
+    echo "🔗 Linking shared files..."
+    
+    # Symlink node_modules if it exists
+    if [ -d "$source_dir/node_modules" ]; then
+        if [ ! -e "$target_dir/node_modules" ]; then
+            echo "   📚 Linking node_modules/ ..."
+            ln -s "$source_dir/node_modules" "$target_dir/node_modules" 2>/dev/null
+            if [ $? -eq 0 ]; then
+                echo "   ✓ node_modules/ linked"
+            else
+                echo "   ⚠️  Failed to link node_modules/"
+            fi
+        else
+            echo "   ⚠️  node_modules/ already exists, skipping"
+        fi
+    fi
+    
+    # Symlink .env.local if it exists
+    if [ -f "$source_dir/.env.local" ]; then
+        if [ ! -e "$target_dir/.env.local" ]; then
+            echo "   🔐 Linking .env.local..."
+            ln -s "$source_dir/.env.local" "$target_dir/.env.local" 2>/dev/null
+            if [ $? -eq 0 ]; then
+                echo "   ✓ .env.local linked"
+            else
+                echo "   ⚠️  Failed to link .env.local"
+            fi
+        else
+            echo "   ⚠️  .env.local already exists, skipping"
+        fi
+    fi
+    
+    # Symlink .env if it exists
+    if [ -f "$source_dir/.env" ]; then
+        if [ ! -e "$target_dir/.env" ]; then
+            echo "   🔐 Linking .env..."
+            ln -s "$source_dir/.env" "$target_dir/.env" 2>/dev/null
+            if [ $? -eq 0 ]; then
+                echo "   ✓ .env linked"
+            else
+                echo "   ⚠️  Failed to link .env"
+            fi
+        else
+            echo "   ⚠️  .env already exists, skipping"
+        fi
+    fi
+    
+    echo "   ✅ Shared files linked!"
+}
+
+# Function for gwcc (allows branch names with slashes) - opens in Cursor
 function gwcc() {
     if [ -z "$1" ]; then
         echo "Usage: gwcc <branch-name>"
@@ -383,6 +463,16 @@ function gwcc() {
         return 1
     fi
     git-worktree-create "$1" --cursor
+}
+
+# Function for gwcw (allows branch names with slashes) - opens in Warp
+function gwcw() {
+    if [ -z "$1" ]; then
+        echo "Usage: gwcw <branch-name>"
+        echo "Example: gwcw hotfix/Rasmee"
+        return 1
+    fi
+    git-worktree-create "$1" --open warp
 }
 
 # ============================================
@@ -398,8 +488,14 @@ gwc-cd() {
     fi
     
     local branch_name=$1
-    local repo_name=$(basename $(git rev-parse --show-toplevel 2>/dev/null || pwd))
-    local worktree_path="$HOME/.cursor/worktrees/$repo_name/$branch_name"
+    local main_repo=$(git rev-parse --show-toplevel 2>/dev/null)
+    
+    if [ -z "$main_repo" ]; then
+        echo "Error: Not in a git repository"
+        return 1
+    fi
+    
+    local worktree_path="$main_repo/.worktrees/$branch_name"
     
     if [ -d "$worktree_path" ]; then
         cd "$worktree_path"
@@ -477,11 +573,16 @@ gwc-rm-branch() {
     fi
     
     local branch_name=$1
-    local repo_name=$(basename $(git rev-parse --show-toplevel 2>/dev/null || pwd))
-    local worktree_path="$HOME/.cursor/worktrees/$repo_name/$branch_name"
+    local main_repo=$(git rev-parse --show-toplevel 2>/dev/null)
+    
+    if [ -z "$main_repo" ]; then
+        echo "Error: Not in a git repository"
+        return 1
+    fi
+    
+    local worktree_path="$main_repo/.worktrees/$branch_name"
     
     if [ -d "$worktree_path" ]; then
-        local main_repo=$(git rev-parse --show-toplevel 2>/dev/null)
         cd "$main_repo"
         git worktree remove "$worktree_path" --force
         echo "✓ Removed worktree: $worktree_path"
@@ -504,16 +605,25 @@ gwc-open() {
     
     local branch_name=$1
     local editor=${2:-cursor}
-    local repo_name=$(basename $(git rev-parse --show-toplevel 2>/dev/null || pwd))
-    local worktree_path="$HOME/.cursor/worktrees/$repo_name/$branch_name"
+    local main_repo=$(git rev-parse --show-toplevel 2>/dev/null)
+    
+    if [ -z "$main_repo" ]; then
+        echo "Error: Not in a git repository"
+        return 1
+    fi
+    
+    local worktree_path="$main_repo/.worktrees/$branch_name"
     
     if [ -d "$worktree_path" ]; then
         case $editor in
             cursor)
                 cursor "$worktree_path" &
                 ;;
-            code)
+            code|vscode)
                 code "$worktree_path" &
+                ;;
+            warp)
+                open -a Warp "$worktree_path" &
                 ;;
             *)
                 $editor "$worktree_path" &
@@ -622,357 +732,6 @@ gwc-health() {
     fi
 }
 
-# ============================================
-# Fix Cursor-Created Worktrees
-# ============================================
-
-# Detect directories created by Cursor that aren't proper git worktrees
-gwc-detect-unlinked() {
-    if ! git rev-parse --git-dir > /dev/null 2>&1; then
-        echo "Error: Not in a git repository"
-        return 1
-    fi
-    
-    local main_repo=$(git rev-parse --show-toplevel 2>/dev/null)
-    local repo_name=$(basename "$main_repo")
-    local worktrees_base="$HOME/.cursor/worktrees/$repo_name"
-    
-    if [ ! -d "$worktrees_base" ]; then
-        echo "No worktrees directory found at: $worktrees_base"
-        return 0
-    fi
-    
-    echo "🔍 Scanning for unlinked worktree directories..."
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    
-    local found_issues=0
-    local -a existing_worktrees
-    
-    # Get list of existing git worktrees
-    while IFS= read -r line; do
-        local wt_path=${line%% *}  # Get first field using ZSH parameter expansion
-        existing_worktrees+=("$wt_path")
-    done < <(git worktree list 2>/dev/null)
-    
-    # Scan all directories in worktrees base
-    for dir in "$worktrees_base"/*(/N); do
-        local branch_name=$(basename "$dir")
-        local is_linked=false
-        
-        # Check if this directory is a registered git worktree
-        for wt in "${existing_worktrees[@]}"; do
-            if [ "$wt" = "$dir" ]; then
-                is_linked=true
-                break
-            fi
-        done
-        
-        if [ "$is_linked" = false ]; then
-            echo ""
-            echo "❌ Found unlinked directory: $dir"
-            echo "   Expected branch: $branch_name"
-            ((found_issues++))
-        fi
-    done
-    
-    echo ""
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    
-    if [ $found_issues -eq 0 ]; then
-        echo "✓ No unlinked directories found"
-    else
-        echo "⚠️  Found $found_issues unlinked director(ies)"
-        echo ""
-        echo "To fix these, run: gwc-link"
-    fi
-}
-
-# Interactive: Select unlinked directory, then select branch to link
-gwc-link-interactive() {
-    if ! git rev-parse --git-dir > /dev/null 2>&1; then
-        echo "Error: Not in a git repository"
-        return 1
-    fi
-    
-    local main_repo=$(git rev-parse --show-toplevel 2>/dev/null)
-    local repo_name=$(basename "$main_repo")
-    local worktrees_base="$HOME/.cursor/worktrees/$repo_name"
-    
-    if [ ! -d "$worktrees_base" ]; then
-        echo "No worktrees directory found at: $worktrees_base"
-        return 0
-    fi
-    
-    echo "🔍 Finding unlinked directories..."
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    
-    local -a unlinked_dirs
-    local -a existing_worktrees
-    
-    # Get list of existing git worktrees
-    while IFS= read -r line; do
-        local wt_path=${line%% *}  # Get first field using ZSH parameter expansion
-        existing_worktrees+=("$wt_path")
-    done < <(git worktree list 2>/dev/null)
-    
-    # Find unlinked directories (including subdirectories for branch/feature structure)
-    # Scan both direct children and nested subdirectories (e.g., hotfix/Protriva, feature/Uploros)
-    for dir in "$worktrees_base"/*(/N) "$worktrees_base"/*/*(/N); do
-        [ -d "$dir" ] || continue
-        
-        local is_linked=false
-        local is_inside_linked=false
-        
-        # Check if this directory is a linked worktree
-        for wt in "${existing_worktrees[@]}"; do
-            if [ "$wt" = "$dir" ]; then
-                is_linked=true
-                break
-            fi
-            
-            # Check if this directory is INSIDE a linked worktree (subdirectory of it)
-            # e.g., Tzmni/Layout is inside Tzmni (which is linked)
-            if [[ "$dir" == "$wt"/* ]]; then
-                is_inside_linked=true
-                break
-            fi
-        done
-        
-        # Check if this is just an organizational folder (like hotfix/) or actual worktree
-        # Skip if it has subdirectories but no files (likely just a parent folder)
-        local has_subdirs=false
-        local has_content=false
-        
-        if [ -n "$(ls -A "$dir" 2>/dev/null)" ]; then
-            has_content=true
-            # Check if it only contains directories (organizational folder)
-            if [ -d "$dir" ] && [ -z "$(find "$dir" -maxdepth 1 -type f 2>/dev/null)" ]; then
-                # Has no files at top level, might be organizational
-                if [ -n "$(find "$dir" -maxdepth 1 -type d ! -name "$(basename "$dir")" 2>/dev/null)" ]; then
-                    has_subdirs=true
-                fi
-            fi
-        fi
-        
-        # Only add if:
-        # - Not linked AND not inside a linked worktree
-        # - AND (has files OR is empty OR has no subdirs - not just organizational folder)
-        if [ "$is_linked" = false ] && [ "$is_inside_linked" = false ]; then
-            # Skip organizational folders (only subdirectories, no files)
-            if [ "$has_subdirs" = true ] && [ "$has_content" = true ]; then
-                # This looks like just an organizational folder (e.g., hotfix/, feature/)
-                continue
-            fi
-            unlinked_dirs+=("$dir")
-        fi
-    done
-    
-    if [ ${#unlinked_dirs[@]} -eq 0 ]; then
-        echo "✓ No unlinked directories found"
-        return 0
-    fi
-    
-    echo ""
-    echo "Found ${#unlinked_dirs[@]} unlinked director(ies):"
-    echo ""
-    
-    # Display numbered list
-    local i=1
-    for dir in "${unlinked_dirs[@]}"; do
-        # Show relative path from worktrees_base for better context
-        local relative_path=${dir#$worktrees_base/}
-        echo "  [$i] $relative_path"
-        echo "      Path: $dir"
-        ((i++))
-    done
-    
-    echo ""
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo -n "Select directory number (1-${#unlinked_dirs[@]}), or 'q' to quit: "
-    read selection
-    
-    if [[ "$selection" == "q" ]] || [[ "$selection" == "Q" ]]; then
-        echo "Cancelled"
-        return 0
-    fi
-    
-    if ! [[ "$selection" =~ ^[0-9]+$ ]] || [ "$selection" -lt 1 ] || [ "$selection" -gt ${#unlinked_dirs[@]} ]; then
-        echo "Error: Invalid selection"
-        return 1
-    fi
-    
-    local selected_dir="${unlinked_dirs[$selection]}"
-    local relative_path=${selected_dir#$worktrees_base/}
-    
-    # Suggest branch name as the full relative path (e.g., hotfix/Protriva)
-    local suggested_branch="$relative_path"
-    
-    echo ""
-    echo "Selected: $relative_path"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo ""
-    echo "Available branches:"
-    echo ""
-    
-    # Get and display all branches
-    local -a all_branches
-    local -a local_branches
-    local_branches=(${(f)"$(git branch --format='%(refname:short)' 2>/dev/null)"})
-    
-    local -a remote_branches
-    local raw_remote_branches=(${(f)"$(git branch -r --format='%(refname:short)' 2>/dev/null | grep -v HEAD)"})
-    remote_branches=("${raw_remote_branches[@]#origin/}")
-    
-    all_branches=($local_branches $remote_branches)
-    all_branches=(${(u)all_branches})
-    all_branches=(${all_branches:#})
-    
-    # Display branches in columns
-    local col=0
-    for branch in "${all_branches[@]}"; do
-        printf "  %-35s" "$branch"
-        ((col++))
-        if [ $((col % 2)) -eq 0 ]; then
-            echo ""
-        fi
-    done
-    if [ $((col % 2)) -ne 0 ]; then
-        echo ""
-    fi
-    
-    echo ""
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo -n "Enter branch name to link (or suggested: $suggested_branch): "
-    read branch_name
-    
-    # If empty, use suggested branch (full relative path)
-    if [ -z "$branch_name" ]; then
-        branch_name="$suggested_branch"
-        echo "Using: $branch_name"
-    fi
-    
-    # Validate branch exists
-    local branch_exists=false
-    if git show-ref --verify --quiet refs/heads/$branch_name; then
-        branch_exists=true
-    elif git show-ref --verify --quiet refs/remotes/origin/$branch_name; then
-        branch_exists=true
-    fi
-    
-    if [ "$branch_exists" = false ]; then
-        echo ""
-        echo "⚠️  Branch '$branch_name' does not exist yet"
-        echo ""
-        echo "Would you like to:"
-        echo "  [1] Create new branch and worktree (like gwcc)"
-        echo "  [2] Cancel and choose a different branch"
-        echo ""
-        echo -n "Your choice (1 or 2): "
-        read create_choice
-        
-        if [[ "$create_choice" == "1" ]]; then
-            echo ""
-            echo "🌱 Creating new branch '$branch_name' and worktree..."
-            
-            # Backup existing content if any
-            local backup_dir=""
-            if [ -n "$(ls -A "$selected_dir" 2>/dev/null)" ]; then
-                backup_dir="${selected_dir}.backup.$(date +%Y%m%d_%H%M%S)"
-                echo "   📦 Backing up existing content to: $backup_dir"
-                mv "$selected_dir" "$backup_dir"
-            else
-                rm -rf "$selected_dir"
-            fi
-            
-            # Create new branch and worktree (like gwcc does)
-            cd "$main_repo"
-            if git worktree add -b "$branch_name" "$selected_dir"; then
-                echo ""
-                echo "✅ Successfully created new branch and worktree!"
-                echo "   Location: $selected_dir"
-                echo "   Branch: $branch_name (new branch)"
-                
-                # Restore backup
-                if [ -n "$backup_dir" ] && [ -d "$backup_dir" ]; then
-                    echo ""
-                    echo "   📋 Restoring content from backup..."
-                    cp -r "$backup_dir"/* "$selected_dir"/ 2>/dev/null
-                    echo "   ✓ Content restored"
-                    echo "   💾 Backup kept at: $backup_dir"
-                fi
-                
-                echo ""
-                echo "🎉 Done! You can now:"
-                echo "   cd $selected_dir"
-                echo "   cursor $selected_dir"
-                
-                return 0
-            else
-                echo ""
-                echo "❌ Failed to create branch and worktree"
-                
-                # Restore backup
-                if [ -n "$backup_dir" ] && [ -d "$backup_dir" ]; then
-                    mv "$backup_dir" "$selected_dir"
-                fi
-                return 1
-            fi
-        else
-            echo "Cancelled"
-            return 0
-        fi
-    fi
-    
-    echo ""
-    echo "🔗 Linking..."
-    echo "   Directory: $selected_dir"
-    echo "   Branch: $branch_name"
-    echo ""
-    
-    # Backup and create worktree
-    local backup_dir=""
-    if [ -n "$(ls -A "$selected_dir" 2>/dev/null)" ]; then
-        backup_dir="${selected_dir}.backup.$(date +%Y%m%d_%H%M%S)"
-        echo "   📦 Backing up existing content to: $backup_dir"
-        mv "$selected_dir" "$backup_dir"
-    else
-        rm -rf "$selected_dir"
-    fi
-    
-    # Create proper worktree
-    cd "$main_repo"
-    if git worktree add "$selected_dir" "$branch_name"; then
-        echo ""
-        echo "✅ Successfully created proper git worktree!"
-        echo "   Location: $selected_dir"
-        echo "   Branch: $branch_name"
-        
-        # Restore backup
-        if [ -n "$backup_dir" ] && [ -d "$backup_dir" ]; then
-            echo ""
-            echo "   📋 Restoring content from backup..."
-            cp -r "$backup_dir"/* "$selected_dir"/ 2>/dev/null
-            echo "   ✓ Content restored"
-            echo "   💾 Backup kept at: $backup_dir"
-        fi
-        
-        echo ""
-        echo "🎉 Done! You can now:"
-        echo "   cd $selected_dir"
-        echo "   cursor $selected_dir"
-        
-        return 0
-    else
-        echo ""
-        echo "❌ Failed to create worktree"
-        
-        # Restore backup
-        if [ -n "$backup_dir" ] && [ -d "$backup_dir" ]; then
-            mv "$backup_dir" "$selected_dir"
-        fi
-        return 1
-    fi
-}
 
 # ============================================
 # Aliases
@@ -982,7 +741,6 @@ alias gwc-list='git worktree list'
 alias gwc-remove='git worktree remove'
 alias gwc-ls='git worktree list'
 alias gwc-rm='git worktree remove'
-alias gwc-link='gwc-link-interactive'  # Short alias for interactive linking
 
 # ============================================
 # Zsh Completion Functions
@@ -996,7 +754,7 @@ _git-worktree-create() {
         '1:branch:->branch' \
         '(-c --cursor)'{-c,--cursor}'[Open in Cursor after creation]' \
         '(-p --path)'{-p,--path}'[Custom worktree path]:path:_files' \
-        '(-o --open)'{-o,--open}'[Open in specified editor]:editor:(cursor code vim nano)'
+        '(-o --open)'{-o,--open}'[Open in specified editor]:editor:(cursor code warp vim nano)'
     
     case $state in
         branch)
@@ -1089,11 +847,29 @@ _gwc-branch-complete() {
 # ============================================
 # Register Completions
 # ============================================
-# Only register if completion system is available
-if (( $+functions[compdef] )) || { autoload -Uz compinit && compinit -C 2>/dev/null; }; then
-    compdef _git-worktree-create git-worktree-create gwc gwcc 2>/dev/null
-    compdef _gwc-remove gwc-remove gwc-rm 2>/dev/null
+# Initialize completion system if not already done
+if [[ ! -v _comp_setup ]]; then
+    autoload -Uz compinit
+    compinit -C 2>/dev/null
+fi
+
+# Register completion functions
+# Note for Warp users: Press TAB twice or configure Warp to prefer shell completions
+if (( $+functions[compdef] )); then
+    compdef _git-worktree-create git-worktree-create 2>/dev/null
+    compdef _git-worktree-create gwc 2>/dev/null
+    compdef _git-worktree-create gwcc 2>/dev/null
+    compdef _git-worktree-create gwcw 2>/dev/null
+    compdef _gwc-remove gwc-remove 2>/dev/null
+    compdef _gwc-remove gwc-rm 2>/dev/null
     compdef _gwc-branch-complete gwc-cd 2>/dev/null
     compdef _gwc-branch-complete gwc-open 2>/dev/null
     compdef _gwc-branch-complete gwc-rm-branch 2>/dev/null
+fi
+
+# Force completion refresh for Warp terminal compatibility
+if [[ "$TERM_PROGRAM" == "WarpTerminal" ]]; then
+    # Ensure Warp respects custom completions
+    zstyle ':completion:*' use-cache on
+    zstyle ':completion:*' cache-path ~/.zsh/cache
 fi
